@@ -109,7 +109,7 @@ public class AdminService {
 
     public List<User> getUnverifiedUsers() {
         // Exclude admins from the pending list just in case
-        return userRepository.findByIsVerifiedFalse().stream()
+        return userRepository.findPendingUsers().stream()
             .filter(u -> !u.getRoles().contains("ADMIN"))
             .toList();
     }

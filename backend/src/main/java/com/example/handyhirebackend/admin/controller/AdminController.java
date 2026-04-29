@@ -4,6 +4,8 @@ import com.example.handyhirebackend.admin.model.Dispute;
 import com.example.handyhirebackend.admin.service.AdminService;
 import com.example.handyhirebackend.job.model.Job;
 import com.example.handyhirebackend.provider.model.ProviderProfile;
+import com.example.handyhirebackend.auth.model.User; // <--- ADD THIS LINE!
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

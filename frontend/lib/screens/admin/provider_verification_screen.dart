@@ -154,7 +154,7 @@ class _ProviderVerificationScreenState extends State<ProviderVerificationScreen>
                                       color: Colors.green.withOpacity(0.1), shape: BoxShape.circle),
                                   child: IconButton(
                                     icon: const Icon(Icons.check_circle, color: Colors.green, size: 28),
-                                    onPressed: () => _showActionDialog(user['id'], user['name'], true),
+                                    onPressed: () => _showActionDialog(user['id'], user['name'] ?? 'Unknown', true),
                                   ),
                                 ),
                                 const SizedBox(width: 10),
@@ -163,7 +163,7 @@ class _ProviderVerificationScreenState extends State<ProviderVerificationScreen>
                                       color: Colors.redAccent.withOpacity(0.1), shape: BoxShape.circle),
                                   child: IconButton(
                                     icon: const Icon(Icons.cancel, color: Colors.redAccent, size: 28),
-                                    onPressed: () => _showActionDialog(user['id'], user['name'], false),
+                                    onPressed: () => _showActionDialog(user['id'], user['name'] ?? 'Unknown', false),
                                   ),
                                 ),
                               ],
