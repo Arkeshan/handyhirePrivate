@@ -1,0 +1,31 @@
+name: handyhire
+description: "HandyHire service app"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  google_fonts: ^8.0.2
+  image_picker: ^1.1.2
+  # Added for API integration with the Spring Boot backend.
+  http: ^1.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  # NOTE: logo.jpg declaration was removed because the file wasn't present
+  # in the repo and Flutter was crashing on startup trying to load it. The
+  # login screen now renders a safe fallback icon instead. If you want the
+  # logo back, put it at assets/logo.jpg and uncomment the block below:
+  #
+  # assets:
+  #   - assets/logo.jpg
