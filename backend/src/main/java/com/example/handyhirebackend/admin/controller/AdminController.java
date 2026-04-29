@@ -26,7 +26,24 @@ public class AdminController {
     }
 
     // ──── Provider Verification ────
+// ADD these endpoints to AdminController.java under Provider Verification
 
+    @GetMapping("/users/pending")
+    public ResponseEntity<List<User>> getPendingUsers() {
+        return ResponseEntity.ok(adminService.getUnverifiedUsers());
+    }
+
+    @PutMapping("/users/{userId}/approve")
+    public ResponseEntity<User> approveUser(@PathVariable Long userId) {
+        return ResponseEntity.ok(adminService.approveUser(userId));
+    }
+
+    @DeleteMapping("/users/{userId}/reject")
+    public ResponseEntity<Void> rejectUser(@PathVariable Long userId) {
+        adminService.rejectUser(userId);
+        return ResponseEntity.ok().build();
+    }
+    
     @GetMapping("/verifications/pending")
     public ResponseEntity<List<ProviderProfile>> getPendingVerifications() {
         return ResponseEntity.ok(adminService.getPendingVerifications());

@@ -24,7 +24,12 @@ public class AuthController {
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
     }
-
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse> logout() {
+        // If you implement a token blacklist in the future, trigger it here.
+        // Otherwise, simply return a successful response.
+        return ResponseEntity.ok(new ApiResponse(true, "Successfully logged out"));
+    }
     // ── Register ───────────────────────────────────────────────────────────────
     @PostMapping("/register")
     public ResponseEntity<LoginResponse> register(@RequestBody RegisterRequest request) {

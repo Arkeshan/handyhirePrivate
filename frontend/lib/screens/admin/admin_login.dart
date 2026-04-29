@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
 import 'admin_dashboard.dart';
+import '../../services/api_service.dart';
+import '../../services/session_service.dart';
 
 class AdminOtpScreen extends StatefulWidget {
   const AdminOtpScreen({super.key});
@@ -47,7 +49,7 @@ class _AdminOtpScreenState extends State<AdminOtpScreen> {
     super.dispose();
   }
 
-  void _verifyOtp() async {
+void _verifyOtp() async {
     if (_otpController.text.length != 6) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter all 6 digits')),
@@ -56,27 +58,45 @@ class _AdminOtpScreenState extends State<AdminOtpScreen> {
     }
 
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 2));
-    if (!mounted) return;
-    setState(() => _isLoading = false);
 
-    // TODO(team): replace dummy bypass with ApiService.instance.verifyAdminOtp(...)
-    if (_otpController.text == '123456') {
+    try {
+      // 1. Get the admin's email that we saved in the session during login
+      final email = SessionService.instance.email;
+      if (email == null) throw Exception("Session email not found");
+
+      // 2. Parse the OTP to an integer
+      final otpInt = int.tryParse(_otpController.text);
+      if (otpInt == null) throw Exception("Invalid OTP format");
+
+      // 3. Call the backend to verify the actual OTP!
+      await ApiService.instance.verifyAdminOtp(
+        email: email,
+        otp: otpInt,
+      );
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      // 4. Success! Navigate to the Dashboard
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const AdminDashboard()),
       );
-    } else {
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      
+      // If the backend says the OTP is wrong/expired, it throws an exception here
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Invalid OTP. Please try again.'),
+        SnackBar(
+          content: Text('Verification Failed. Please try again.'),
           backgroundColor: Colors.redAccent,
         ),
       );
     }
-  }
+}
 
-  @override
+@override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0B1E3F),
@@ -109,7 +129,7 @@ class _AdminOtpScreenState extends State<AdminOtpScreen> {
                     ),
                     const SizedBox(height: 20),
                     const Text(
-                      'We have sent a 6-digit security code to admin@email.com. Please enter it below.\n\n(Demo OTP: 123456)',
+                      'We have sent a 6-digit security code to admin@email.com. Please enter it below.\n\n',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: Colors.white70, fontSize: 16),
                     ),

@@ -14,6 +14,7 @@ dependencies:
   image_picker: ^1.1.2
   # Added for API integration with the Spring Boot backend.
   http: ^1.2.2
+  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:
@@ -22,10 +23,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  # NOTE: logo.jpg declaration was removed because the file wasn't present
-  # in the repo and Flutter was crashing on startup trying to load it. The
-  # login screen now renders a safe fallback icon instead. If you want the
-  # logo back, put it at assets/logo.jpg and uncomment the block below:
-  #
-  # assets:
-  #   - assets/logo.jpg
+
+  # Ensure there are exactly 2 spaces before 'assets:' 
+  # and 4 spaces before the '- assets/images/'
+  assets:
+    - assets/

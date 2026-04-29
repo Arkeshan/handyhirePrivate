@@ -42,7 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  Future<void> _handleLogin() async {
+Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
 
@@ -59,11 +59,12 @@ class _LoginScreenState extends State<LoginScreen> {
         final status = resp['status']?.toString() ?? 'FAILED';
 
         if (status == 'INVALID_CREDENTIALS') {
-          _showError('Wrong email or password.\n\nDemo accounts:\ncustomer@test.com / test123\nprovider@test.com / test123\narkesuje@gmail.com / admin123');
+          // 1. UPDATED: Removed Customer and Provider demo credentials
+          _showError('Wrong email or password.');
           return;
         }
         if (status == 'PENDING_VERIFICATION') {
-          _showError('Your provider account is waiting for admin approval.\nLog in as admin to approve it.');
+          _showError('Your account is waiting for admin approval.\nPlease check back later.');          
           return;
         }
         if (status != 'SUCCESS' && status != 'OTP_REQUIRED') {
@@ -76,10 +77,17 @@ class _LoginScreenState extends State<LoginScreen> {
         final rawId = resp['userId'];
         userId = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '');
 
-        if (status == 'OTP_REQUIRED') {
+        // 2. UPDATED: Intercept Admin login and trigger the OTP email
+        if (status == 'OTP_REQUIRED' || resolvedRole == 'ADMIN') {
+          // Tell the backend to email the OTP to the admin
+          await ApiService.instance.sendAdminOtp(email: email, password: password);
+          
           SessionService.instance.saveSession(role: 'ADMIN', userId: userId, email: email);
+          
           if (!mounted) return;
           setState(() => _isLoading = false);
+          
+          // Navigate to your existing OTP screen
           Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminOtpScreen()));
           return;
         }
@@ -110,6 +118,7 @@ class _LoginScreenState extends State<LoginScreen> {
       Widget landing;
       switch (resolvedRole) {
         case 'PROVIDER':  landing = const provider.HomeScreen(); break;
+        // In offline mode, navigate to OTP as well
         case 'ADMIN':     landing = const AdminOtpScreen(); break;
         default:          landing = const customer.HomeScreen();
       }
@@ -188,10 +197,26 @@ class _LoginScreenState extends State<LoginScreen> {
                     Container(
                       width: 85, height: 85,
                       decoration: BoxDecoration(color: const Color(0xFF1E355B), borderRadius: BorderRadius.circular(18)),
-                      child: const Icon(Icons.handyman, color: Color(0xFFB18E44), size: 48),
+                      // Change this block:
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(18),
+                        child: Image.asset(
+                          // USE THIS EXACT STRING, DO NOT PUT "C:\..."
+                          'assets/logo.jpg', 
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => const Icon(
+                            Icons.handyman,
+                            color: Color(0xFFB18E44),
+                            size: 48,
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
+              
+              
+              
               ),
               AnimatedSlide(
                 duration: const Duration(milliseconds: 900),
@@ -209,28 +234,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: Column(
                           children: [
                             // Demo hint card
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF1E355B),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: const Color(0xFF8EBBFF).withOpacity(0.4)),
-                              ),
-                              child: const Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(children: [
-                                    Icon(Icons.info_outline, color: Color(0xFF8EBBFF), size: 16),
-                                    SizedBox(width: 6),
-                                    Text('Demo Login Accounts', style: TextStyle(color: Color(0xFF8EBBFF), fontWeight: FontWeight.bold, fontSize: 13)),
-                                  ]),
-                                  SizedBox(height: 6),
-                                  Text('Customer  →  customer@test.com      /  test123', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                                  Text('Provider  →  provider@test.com       /  test123', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                                  Text('Admin     →  arkesuje@gmail.com  /  admin123', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                                ],
-                              ),
-                            ),
+                           
                             const SizedBox(height: 18),
                             // Email field
                             TextFormField(

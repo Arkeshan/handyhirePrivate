@@ -105,7 +105,27 @@ public class AdminService {
         dispute.setResolvedAt(LocalDateTime.now());
         return disputeRepository.save(dispute);
     }
+// ADD these methods to AdminService.java
 
+    public List<User> getUnverifiedUsers() {
+        // Exclude admins from the pending list just in case
+        return userRepository.findByIsVerifiedFalse().stream()
+            .filter(u -> !u.getRoles().contains("ADMIN"))
+            .toList();
+    }
+
+    public User approveUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        user.setVerified(true);
+        return userRepository.save(user);
+    }
+    
+    public void rejectUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        userRepository.delete(user); // Or set a "REJECTED" flag if you prefer soft-deletes
+    }
     // ──── Dashboard Stats ────
 
     public Map<String, Object> getDashboardStats() {

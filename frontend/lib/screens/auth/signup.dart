@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
-
+import '../../services/api_service.dart'; // ADD THIS LINE
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
 
@@ -340,17 +340,50 @@ class _SignupScreenState extends State<SignupScreen> {
                           onPressed: () async {
                             if (_formKey.currentState!.validate()) {
                               setState(() => _isLoading = true);
-                              await Future.delayed(const Duration(seconds: 2));
-                              if (!mounted) return;
-                              setState(() => _isLoading = false);
-                              if (isProviderOrBoth) {
+
+                              try {
+                                final name = _nameController.text.trim();
+                                final email = _emailController.text.trim();
+                                final password = _passwordController.text;
+
+                                // 1. Figure out which roles to register based on dropdown
+                                List<String> rolesToRegister = [];
+                                if (_selectedRole == 'Register as Customer') {
+                                  rolesToRegister.add('CUSTOMER');
+                                } else if (_selectedRole == 'Register as Provider') {
+                                  rolesToRegister.add('PROVIDER');
+                                } else {
+                                  // If both, we hit the register endpoint twice to append both roles
+                                  rolesToRegister.add('CUSTOMER');
+                                  rolesToRegister.add('PROVIDER');
+                                }
+
+                                // 2. Call the backend API
+                                for (String role in rolesToRegister) {
+                                  await ApiService.instance.register(
+                                    name: name,
+                                    email: email,
+                                    password: password,
+                                    role: role,
+                                  );
+                                }
+
+                                if (!mounted) return;
+                                setState(() => _isLoading = false);
+
+                                // 3. Since we updated the backend so EVERYONE needs approval,
+                                // we ALWAYS show the pending approval dialog now!
                                 _showPendingApprovalDialog();
-                              } else {
+
+                              } catch (e) {
+                                if (!mounted) return;
+                                setState(() => _isLoading = false);
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content: Text(
-                                            'Registered successfully as Customer!')));
-                                Navigator.pop(context);
+                                  SnackBar(
+                                    content: Text('Registration failed: $e'), 
+                                    backgroundColor: Colors.redAccent
+                                  ),
+                                );
                               }
                             }
                           },

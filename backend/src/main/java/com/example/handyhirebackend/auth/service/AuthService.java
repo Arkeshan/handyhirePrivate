@@ -30,6 +30,11 @@ public class AuthService {
 
         Set<String> roles = user.getRoles();
 
+        // 1. ADDED: Check verification for EVERYONE (except the Admin) right after password check
+        if (!user.isVerified() && !roles.contains("ADMIN")) {
+            return new LoginResponse("PENDING_VERIFICATION", null, "Account pending admin approval", user.getId());
+        }
+
         if (roles.contains("ADMIN")) {
             return new LoginResponse("OTP_REQUIRED", null, "Admin login requires OTP", user.getId());
         }
@@ -39,10 +44,7 @@ public class AuthService {
         }
 
         if (roles.contains("PROVIDER")) {
-            if (!user.isVerified()) {
-                return new LoginResponse("PENDING_VERIFICATION", "PROVIDER",
-                        "Account pending admin approval", user.getId());
-            }
+            // REMOVED the old provider-only verification check from here
             return new LoginResponse("SUCCESS", "PROVIDER", "Login successful", user.getId());
         }
 
@@ -62,6 +64,7 @@ public class AuthService {
         String normalizedRole = request.getRole().toUpperCase();
         Optional<User> opt = userRepository.findByEmail(request.getEmail());
 
+        // ... existing "if user already exists" block remains unchanged ...
         if (opt.isPresent()) {
             User existing = opt.get();
             if (!existing.getPassword().equals(request.getPassword())) {
@@ -80,20 +83,22 @@ public class AuthService {
         user.setEmail(request.getEmail());
         user.setPassword(request.getPassword());
         user.setPhone(request.getPhone());
-        user.setVerified(!normalizedRole.equals("PROVIDER")); // providers need admin approval
+        
+        // 2. UPDATED: Set verified to FALSE for every new user automatically
+        user.setVerified(false); 
 
         Set<String> roles = new HashSet<>();
         roles.add(normalizedRole);
         user.setRoles(roles);
 
         User saved = userRepository.save(user);
-        String msg = normalizedRole.equals("PROVIDER")
-                ? "Registration successful. Pending admin verification."
-                : "User registered successfully";
+        
+        // 3. UPDATED: Generic pending message for everyone
+        String msg = "Registration successful. Pending admin verification.";
 
         return new LoginResponse("SUCCESS", normalizedRole, msg, saved.getId());
     }
-
+    
     private boolean isBlank(String s) {
         return s == null || s.trim().isEmpty();
     }

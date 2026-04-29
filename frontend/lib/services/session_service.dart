@@ -1,10 +1,8 @@
+import 'package:shared_preferences/shared_preferences.dart';
+import 'api_service.dart'; // Import your ApiService
+
 /// Simple in-memory session holder. Replace with `shared_preferences` /
 /// secure storage when you wire the real API.
-///
-/// ⚠️ HUMAN INPUT NEEDED:
-///   - Decide whether you want persistent login (app reopens logged in).
-///     If yes, add the `shared_preferences` or `flutter_secure_storage`
-///     package to pubspec.yaml and persist [currentRole] + [userId] here.
 class SessionService {
   SessionService._();
   static final SessionService instance = SessionService._();
@@ -33,5 +31,22 @@ class SessionService {
     userId = null;
     displayName = null;
     email = null;
+  }
+  
+  Future<void> logout() async {
+      // 1. Notify the backend
+      try {
+        // FIX: Changed ApiService() to ApiService.instance
+        await ApiService.instance.logoutBackend();
+      } catch (e) {
+        print("Could not reach backend for logout, proceeding with local logout.");
+      }
+
+      // 2. Clear persistent storage
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear(); 
+      
+      // 3. Clear in-memory variables
+      clear(); 
   }
 }

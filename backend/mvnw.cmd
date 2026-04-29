@@ -1,3 +1,4 @@
+<# : batch portion
 @REM ----------------------------------------------------------------------------
 @REM Maven Wrapper startup script for Windows
 @REM Auto-downloads Maven if not already present - no manual install needed

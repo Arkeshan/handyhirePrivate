@@ -49,7 +49,24 @@ class ApiService {
     required int otp,
   }) =>
       _postJson(ApiConfig.adminVerifyOtp, {'email': email, 'otp': otp});
+// ─── ADMIN ───────────────────────────────────────────────────────────────
 
+  Future<Map<String, dynamic>> getPendingUsers() =>
+      _getJson('/api/admin/users/pending');
+
+  Future<Map<String, dynamic>> approveUser(int userId) =>
+      _putJson('/api/admin/users/$userId/approve', const {});
+
+  Future<bool> rejectUser(int userId) async {
+    try {
+      final res = await _client
+          .delete(_uri('/api/admin/users/$userId/reject'), headers: _headers())
+          .timeout(ApiConfig.timeout);
+      return res.statusCode == 200;
+    } catch (e) {
+      throw ApiException('Failed to reject user: $e');
+    }
+  }
   // ─── JOBS ────────────────────────────────────────────────────────────────
 
   Future<Map<String, dynamic>> createJob({
@@ -156,7 +173,19 @@ class ApiService {
       throw ApiException('Network error: $e');
     }
   }
-
+  Future<bool> logoutBackend() async {
+      try {
+        // By using your internal wrapper, this automatically applies 
+        // ApiConfig.baseUrl, your standard headers, and your timeout logic.
+        await _postJson('/api/auth/logout', {});
+        return true;
+      } catch (e) {
+        // If the backend is down or the token is already invalid, 
+        // we catch the ApiException here and return false.
+        print("Backend logout failed or unreachable: $e");
+        return false;
+      }
+  }
   Map<String, String> _headers() => {
         'Content-Type': 'application/json',
         'Accept': 'application/json',

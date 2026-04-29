@@ -52,7 +52,7 @@ class AdminDashboard extends StatelessWidget {
               ),
               _buildDashboardTile(
                 context,
-                title: 'Provider\nVerification',
+                title: 'User\nVerification',
                 icon: Icons.verified_user,
                 onTap: () => Navigator.push(
                   context,

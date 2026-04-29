@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'app_colors.dart';
+import '../auth/login_screen.dart';
+import '../../services/session_service.dart';
+import 'app_colors.dart'; // Assuming this is needed based on your AppColors references
 
 class CustomerProfileScreen extends StatefulWidget {
   const CustomerProfileScreen({super.key});
@@ -43,6 +45,21 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
     });
   }
 
+  // Moved the logout logic inside a proper method
+  Future<void> _handleLogout() async {
+    // Use the singleton instance
+    await SessionService.instance.logout();
+
+    // Ensure the widget is still in the tree before navigating
+    if (!mounted) return;
+
+    // Navigate back to Login and remove all previous routes
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+      (Route<dynamic> route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -82,6 +99,29 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                 _buildInfoField(Icons.phone_outlined, "Phone", _phoneController),
                 _buildInfoField(
                     Icons.location_on_outlined, "Address", _addressController),
+                
+                const SizedBox(height: 30),
+                
+                // ADDED LOGOUT BUTTON HERE
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: _handleLogout,
+                    icon: const Icon(Icons.logout, color: Colors.white),
+                    label: const Text(
+                      "Logout", 
+                      style: TextStyle(color: Colors.white, fontSize: 16)
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.redAccent,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15)
+                      ),
+                    ),
+                  ),
+                ),
+                
                 const SizedBox(height: 40),
               ],
             ),
