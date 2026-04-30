@@ -25,19 +25,34 @@ class ApiService {
   }) =>
       _postJson(ApiConfig.login, {'email': email, 'password': password});
 
+// Update the method signature to accept optional files
   Future<Map<String, dynamic>> register({
     required String name,
     required String email,
     required String password,
-    required String role, // "CUSTOMER" | "PROVIDER" | "ADMIN"
-  }) =>
-      _postJson(ApiConfig.register, {
-        'name': name,
-        'email': email,
-        'password': password,
-        'role': role,
-      });
+    required String role,
+    String? idProofName, // ADDED
+    String? certificationName, // ADDED
+  }) async {
+    final Map<String, dynamic> body = {
+      'name': name,
+      'email': email,
+      'password': password,
+      'role': role,
+      'phone': '0000000000',
+    };
 
+    // Include the fake files if they were provided (usually only for providers)
+    if (idProofName != null) {
+      body['idProofName'] = idProofName;
+    }
+    if (certificationName != null) {
+      body['certificationName'] = certificationName;
+    }
+
+    return _postJson('/api/auth/register', body);
+  }
+  
   Future<Map<String, dynamic>> sendAdminOtp({
     required String email,
     required String password,

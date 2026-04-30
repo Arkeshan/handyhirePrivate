@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
-import '../../services/api_service.dart'; // ADD THIS LINE
+import '../../services/api_service.dart';
+import 'package:file_picker/file_picker.dart';
+
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
 
@@ -19,6 +21,10 @@ class _SignupScreenState extends State<SignupScreen> {
   final TextEditingController _confirmPasswordController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _experienceController = TextEditingController();
+
+  // ADDED: State variables to hold the selected file names
+  String? _idProofFileName;
+  String? _certificationFileName;
 
   String _selectedRole = 'Register as Customer';
   final List<String> _roles = [
@@ -81,7 +87,15 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
+  // UPDATED: Now actually picks files and displays the file name!
   Widget _buildFileUploadBox(String title, IconData icon) {
+    String displayFileName = 'No file selected';
+    if (title.contains('NIC') && _idProofFileName != null) {
+      displayFileName = _idProofFileName!;
+    } else if (title.contains('Certificates') && _certificationFileName != null) {
+      displayFileName = _certificationFileName!;
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       padding: const EdgeInsets.all(15),
@@ -91,27 +105,54 @@ class _SignupScreenState extends State<SignupScreen> {
         border: Border.all(color: const Color(0xFF8EBBFF).withOpacity(0.5), width: 1.5),
       ),
       child: InkWell(
-        onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('File picker for $title coming soon!')));
+        onTap: () async {
+          // Open the native file picker
+          FilePickerResult? result = await FilePicker.platform.pickFiles(
+            type: FileType.custom,
+            allowedExtensions: ['jpg', 'pdf', 'png'],
+          );
+
+          if (result != null) {
+            setState(() {
+              if (title.contains('NIC')) {
+                _idProofFileName = result.files.single.name;
+              } else {
+                _certificationFileName = result.files.single.name;
+              }
+            });
+          }
         },
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                  color: const Color(0xFF8EBBFF),
-                  borderRadius: BorderRadius.circular(10)),
-              child: Icon(icon, color: const Color(0xFF0B1E3F)),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                      color: const Color(0xFF8EBBFF),
+                      borderRadius: BorderRadius.circular(10)),
+                  child: Icon(icon, color: const Color(0xFF0B1E3F)),
+                ),
+                const SizedBox(width: 15),
+                Expanded(
+                    child: Text(title,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500))),
+                const Icon(Icons.upload_file, color: Color(0xFFC0C0C2)),
+              ],
             ),
-            const SizedBox(width: 15),
-            Expanded(
-                child: Text(title,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500))),
-            const Icon(Icons.upload_file, color: Color(0xFFC0C0C2)),
+            const SizedBox(height: 10),
+            Text(
+              displayFileName,
+              style: TextStyle(
+                color: displayFileName == 'No file selected' ? Colors.white54 : Colors.greenAccent,
+                fontSize: 13,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
           ],
         ),
       ),
@@ -346,33 +387,31 @@ class _SignupScreenState extends State<SignupScreen> {
                                 final email = _emailController.text.trim();
                                 final password = _passwordController.text;
 
-                                // 1. Figure out which roles to register based on dropdown
                                 List<String> rolesToRegister = [];
                                 if (_selectedRole == 'Register as Customer') {
                                   rolesToRegister.add('CUSTOMER');
                                 } else if (_selectedRole == 'Register as Provider') {
                                   rolesToRegister.add('PROVIDER');
                                 } else {
-                                  // If both, we hit the register endpoint twice to append both roles
                                   rolesToRegister.add('CUSTOMER');
                                   rolesToRegister.add('PROVIDER');
                                 }
 
-                                // 2. Call the backend API
                                 for (String role in rolesToRegister) {
                                   await ApiService.instance.register(
                                     name: name,
                                     email: email,
                                     password: password,
                                     role: role,
+                                    // UPDATED: Pass the files to the API service
+                                    idProofName: role == 'PROVIDER' ? _idProofFileName : null,
+                                    certificationName: role == 'PROVIDER' ? _certificationFileName : null,
                                   );
                                 }
 
                                 if (!mounted) return;
                                 setState(() => _isLoading = false);
 
-                                // 3. Since we updated the backend so EVERYONE needs approval,
-                                // we ALWAYS show the pending approval dialog now!
                                 _showPendingApprovalDialog();
 
                               } catch (e) {

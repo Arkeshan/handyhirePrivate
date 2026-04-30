@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../utils/app_colors.dart';
+import '../../services/session_service.dart';
+import '../auth/login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -34,6 +36,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _skillsController.dispose();
     _experienceController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleLogout(BuildContext context) async {
+    await SessionService.instance.logout();
+
+    if (!context.mounted) return;
+
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+      (Route<dynamic> route) => false,
+    );
   }
 
   void _toggleEdit() {
@@ -145,9 +158,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 width: double.infinity,
                 height: 52,
                 child: OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).popUntil((route) => route.isFirst);
-                  },
+                  // FIXED: Now properly calls your logout function!
+                  onPressed: () => _handleLogout(context), 
                   icon: const Icon(Icons.logout, color: AppColors.danger),
                   label: const Text('Log Out',
                       style: TextStyle(
